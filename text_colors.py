@@ -1,0 +1,31 @@
+# Colors
+BLACK = "\u001b[30m"
+RED = "\u001b[31m"
+GREEN = "\u001b[32m"
+YELLOW = "\u001b[33m"
+BLUE = "\u001b[34m"
+MAGENTA = "\u001b[35m"
+CYAN = "\u001b[36m"
+WHITE = "\u001b[37m"
+
+# Formatting
+BOLD = "\033[1m"
+ITALIC = "\033[3m"
+UNDERLINE = "\033[4m"
+
+# Templates
+HEADER = "\033[95m"
+WARNING = "\033[93m"
+FAIL = "\033[91m"
+HOTKEY = f"{BOLD}{GREEN}"
+BOLD_UNDERLINE = f"{BOLD}{UNDERLINE}"
+NEW_FEATURE = f"{RED}"
+USER_PROMPT = "\033[96m"
+SOURCE_LABEL = f"{BOLD}{RED}"
+RECEIVER_LVL = f"{BLUE}{BOLD}"
+RECEIVER_LABEL = f"{BOLD}{BLUE}"
+
+# Reset
+ENDC = "\033[0m"
+DEFAULT = "\u001b[0m"
+
