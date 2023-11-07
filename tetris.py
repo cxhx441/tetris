@@ -16,6 +16,25 @@ class Matrix:
     BASE_SLEEP = 0.25
     WIDTH = 10
     HEIGHT = 16
+    pieces = {
+        "I": ((2, 3), (2, 4), (2, 5), (2, 6)),
+        "J": ((1, 3), (2, 3), (2, 4), (2, 5)),
+        "L": ((1, 3), (2, 3), (2, 4), (2, 5)),
+        "O": ((1, 4), (2, 4), (1, 5), (2, 5)),
+        "S": ((2, 3), (2, 4), (1, 4), (1, 5)),
+        "T": ((2, 3), (2, 4), (1, 4), (2, 5)),
+        "Z": ((1, 3), (1, 4), (2, 4), (2, 5)),
+    }
+    piece_colors = {
+        "I": text_colors.CYAN,
+        "J": text_colors.BLUE,
+        "L": text_colors.WHITE,
+        "O": text_colors.YELLOW,
+        "S": text_colors.GREEN,
+        "T": text_colors.MAGENTA,
+        "Z": text_colors.RED,
+    }
+
 
     def __init__(self):
         self.matrix = [
@@ -23,25 +42,6 @@ class Matrix:
         ]
         self.ground = set()
         self.piece = None
-        self.pieces = {
-            "I": ((2, 3), (2, 4), (2, 5), (2, 6)),
-            "J": ((1, 3), (2, 3), (2, 4), (2, 5)),
-            "L": ((1, 3), (2, 3), (2, 4), (2, 5)),
-            "O": ((1, 4), (2, 4), (1, 5), (2, 5)),
-            "S": ((2, 3), (2, 4), (1, 4), (1, 5)),
-            "T": ((2, 3), (2, 4), (1, 4), (2, 5)),
-            "Z": ((1, 3), (1, 4), (2, 4), (2, 5)),
-        }
-        self.piece_colors = {
-            "I": text_colors.CYAN,
-            "J": text_colors.BLUE,
-            "L": text_colors.WHITE,
-            "O": text_colors.YELLOW,
-            "S": text_colors.GREEN,
-            "T": text_colors.MAGENTA,
-            "Z": text_colors.RED,
-        }
-
     def __str__(self):
         mat_chrs = []
 
@@ -51,7 +51,7 @@ class Matrix:
             mat_chrs.append(Matrix.LR_BORDER)
 
             for c in self.matrix[r]:
-                if c in self.pieces.keys():
+                if c in Matrix.pieces.keys():
                     mat_chrs += [self.piece_colors[c], c, text_colors.ENDC]
                 else:
                     mat_chrs.append(c)
