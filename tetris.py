@@ -55,9 +55,6 @@ class Matrix:
         self.spawn_piece()
         self.game_over = False
         self.sleep_ms = 1000
-        keyboard.add_hotkey("d", lambda: self.user_move_piece("RIGHT"))
-        keyboard.add_hotkey("a", lambda: self.user_move_piece("LEFT"))
-        keyboard.add_hotkey("s", lambda: self.user_move_piece("DOWN"))
 
     def run(self):
         while self.game_over is not True:
@@ -100,7 +97,6 @@ class Matrix:
 
         if self.game_over is not True:
             self.draw_screen()
-
 
     def add_piece_to_stack(self, piece):
         for coord in piece["coords"]:
@@ -157,15 +153,18 @@ class Matrix:
 
     def user_move_piece(self, direction):
         temp_moved_piece = self.get_temp_moved_piece(direction)
-        if self.is_inside_stack(temp_moved_piece) or \
-           self.is_outside_bounds(temp_moved_piece):
+        if self.is_inside_stack(temp_moved_piece) or self.is_outside_bounds(
+            temp_moved_piece
+        ):
             return
         self.move_piece(direction)
         self.draw_screen()
 
     def is_outside_bounds(self, piece):
         for coord in piece["coords"]:
-            if coord[0] not in range(Matrix.HEIGHT) or coord[1] not in range(Matrix.WIDTH):
+            if coord[0] not in range(Matrix.HEIGHT) or coord[1] not in range(
+                Matrix.WIDTH
+            ):
                 return True
         return False
 
@@ -207,7 +206,6 @@ class Matrix:
                 self.matrix[coord[0]][coord[1]] = self.piece["shape"]
 
     def end_game(self):
-        keyboard.unkook_all()
         print("GAME_OVER")
         self.game_over = True
 
@@ -231,5 +229,9 @@ if __name__ == "__main__":
     matrix = Matrix()
     matrix.sleep_ms = 1000
 
+    keyboard.add_hotkey("d", lambda: matrix.user_move_piece("RIGHT"))
+    keyboard.add_hotkey("a", lambda: matrix.user_move_piece("LEFT"))
+    keyboard.add_hotkey("s", lambda: matrix.user_move_piece("DOWN"))
+    keyboard.add_hotkey("x", matrix.end_game)
     matrix.run()
     keyboard.unkook_all()
