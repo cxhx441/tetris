@@ -1,6 +1,7 @@
 import time
 import os
 from random import choice
+import keyboard
 import text_colors
 import copy
 
@@ -35,9 +36,7 @@ class Matrix:
         "Z": text_colors.RED,
     }
 
-
     def __init__(self):
-        self.sleep = 1
         self.matrix = [
             [Matrix.EMPTY_SPACE] * Matrix.WIDTH for _ in range(Matrix.HEIGHT)
         ]
@@ -51,11 +50,25 @@ class Matrix:
             "Z": list(),
         }
 
-        self.top_of_stack = [Matrix.HEIGHT]*Matrix.WIDTH
+        self.top_of_stack = [Matrix.HEIGHT] * Matrix.WIDTH
         self.piece = None
-        self.game_over = False
         self.spawn_piece()
-        self.draw_screen()
+        self.game_over = False
+        self.sleep_ms = 1000
+        keyboard.add_hotkey("d", lambda: self.user_move_piece("RIGHT"))
+        keyboard.add_hotkey("a", lambda: self.user_move_piece("LEFT"))
+        keyboard.add_hotkey("s", lambda: self.user_move_piece("DOWN"))
+
+    def run(self):
+        while self.game_over is not True:
+            self.listen_for_keys()
+            self.step()
+
+    def listen_for_keys(self):
+        end_time = round(time.time() * 1000) + self.sleep_ms
+        while round(time.time() * 1000) < end_time:
+            time.sleep(self.sleep_ms / 1000)
+
     def __str__(self):
         mat_chrs = []
 
@@ -80,13 +93,14 @@ class Matrix:
         temp_moved_piece = self.get_temp_moved_piece("DOWN")
         if self.is_inside_top_of_stack(temp_moved_piece):
             self.add_piece_to_stack(self.piece)
-            #self.handle_tetris()
+            # self.handle_tetris()
             self.spawn_piece()
         else:
             self.move_piece("DOWN")
 
         if self.game_over is not True:
             self.draw_screen()
+
 
     def add_piece_to_stack(self, piece):
         for coord in piece["coords"]:
@@ -99,7 +113,6 @@ class Matrix:
                 existing = self.top_of_stack[coord[1]]
                 new = coord[0]
                 self.top_of_stack[coord[1]] = min(new, existing)
-
 
     def is_inside_top_of_stack(self, piece):
         for coord in piece["coords"]:
@@ -118,7 +131,6 @@ class Matrix:
     def draw_screen(self):
         clear_screen()
         print(self)
-        time.sleep(self.sleep)
 
     def remove_piece(self):
         for coord in self.piece["coords"]:
@@ -142,6 +154,20 @@ class Matrix:
             elif direction == "RIGHT":
                 coord[1] += 1
         self.add_piece()
+
+    def user_move_piece(self, direction):
+        temp_moved_piece = self.get_temp_moved_piece(direction)
+        if self.is_inside_stack(temp_moved_piece) or \
+           self.is_outside_bounds(temp_moved_piece):
+            return
+        self.move_piece(direction)
+        self.draw_screen()
+
+    def is_outside_bounds(self, piece):
+        for coord in piece["coords"]:
+            if coord[0] not in range(Matrix.HEIGHT) or coord[1] not in range(Matrix.WIDTH):
+                return True
+        return False
 
     def get_temp_moved_piece(self, direction):
         temp_moved_piece = copy.deepcopy(self.piece)
@@ -181,6 +207,7 @@ class Matrix:
                 self.matrix[coord[0]][coord[1]] = self.piece["shape"]
 
     def end_game(self):
+        keyboard.unkook_all()
         print("GAME_OVER")
         self.game_over = True
 
@@ -202,9 +229,7 @@ class Matrix:
 
 if __name__ == "__main__":
     matrix = Matrix()
-    matrix.sleep = 0.05
+    matrix.sleep_ms = 1000
 
-    no_infinite_loop = 0
-    while matrix.game_over is False and no_infinite_loop < 200:
-        matrix.step()
-        no_infinite_loop += 1
+    matrix.run()
+    keyboard.unkook_all()
