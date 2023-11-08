@@ -2,6 +2,7 @@ import time
 import os
 from random import choice
 import text_colors
+import copy
 
 
 def clear_screen():
@@ -13,7 +14,6 @@ class Matrix:
     LR_BORDER = "|"
     TOP_BORDER = "_"
     BOTTOM_BORDER = "\u0305"
-    BASE_SLEEP = 0.25
     WIDTH = 10
     HEIGHT = 16
     pieces = {
@@ -37,11 +37,25 @@ class Matrix:
 
 
     def __init__(self):
+        self.sleep = 1
         self.matrix = [
             [Matrix.EMPTY_SPACE] * Matrix.WIDTH for _ in range(Matrix.HEIGHT)
         ]
-        self.ground = set()
+        self.stack = {
+            "I": list(),
+            "J": list(),
+            "L": list(),
+            "O": list(),
+            "S": list(),
+            "T": list(),
+            "Z": list(),
+        }
+
+        self.top_of_stack = [Matrix.HEIGHT]*Matrix.WIDTH
         self.piece = None
+        self.game_over = False
+        self.spawn_piece()
+        self.draw_screen()
     def __str__(self):
         mat_chrs = []
 
@@ -63,67 +77,112 @@ class Matrix:
         return "".join(mat_chrs)
 
     def step(self):
-        if self.piece is None:
+        temp_moved_piece = self.get_temp_moved_piece("DOWN")
+        if self.is_inside_top_of_stack(temp_moved_piece):
+            self.add_piece_to_stack(self.piece)
+            #self.handle_tetris()
             self.spawn_piece()
-        elif self.piece is not None:
-            # if piece is touching ground, add_to_ground (add_to_ground will then check for tetris)
-            self.move_piece_in_matrix("DOWN", force=True)
+        else:
+            self.move_piece("DOWN")
+
+        if self.game_over is not True:
+            self.draw_screen()
+
+    def add_piece_to_stack(self, piece):
+        for coord in piece["coords"]:
+            self.stack[piece["shape"]].append(coord)
+        self.update_top_of_stack()
+
+    def update_top_of_stack(self):
+        for coords in self.stack.values():
+            for coord in coords:
+                existing = self.top_of_stack[coord[1]]
+                new = coord[0]
+                self.top_of_stack[coord[1]] = min(new, existing)
+
+
+    def is_inside_top_of_stack(self, piece):
+        for coord in piece["coords"]:
+            # if coord == top of stack, return true
+            if self.top_of_stack[coord[1]] == coord[0]:
+                return True
+        return False
+
+    def is_inside_stack(self, piece):
+        for coord in piece["coords"]:
+            for stack_coords in self.stack.values():
+                if coord in stack_coords:
+                    return True
+        return False
+
+    def draw_screen(self):
         clear_screen()
         print(self)
-        time.sleep(Matrix.BASE_SLEEP)
+        time.sleep(self.sleep)
 
-    def move_piece_in_matrix(self, direction, force=False):
+    def remove_piece(self):
         for coord in self.piece["coords"]:
             if coord[0] in range(Matrix.HEIGHT) and coord[1] in range(Matrix.WIDTH):
-                self.matrix[coord[0]][
-                    coord[1]
-                ] = Matrix.EMPTY_SPACE  # remove old piece position from matrix
+                self.matrix[coord[0]][coord[1]] = Matrix.EMPTY_SPACE
 
-        if force is True:
-            for coord in self.piece["coords"]:
-                if direction == "DOWN":
-                    coord[0] += 1
-                elif direction == "UP":
-                    coord[0] -= 1
-                elif direction == "LEFT":
-                    coord[1] -= 1
-                elif direction == "RIGHT":
-                    coord[1] += 1
-
-        elif force is False:
-            new_piece = self.piece.copy()
-
-            for coord in new_piece:
-                if direction == "DOWN":
-                    coord[0] += 1
-                elif direction == "UP":
-                    coord[0] -= 1
-                elif direction == "LEFT":
-                    coord[1] -= 1
-                elif direction == "RIGHT":
-                    coord[1] += 1
-
-            for coord in new_piece:
-                if coord[1] not in range(Matrix.WIDTH):
-                    new_piece = self.piece
-                    break
-
-            self.piece = new_piece
-
-        # update matrix
+    def add_piece(self):
         for coord in self.piece["coords"]:
             if coord[0] in range(Matrix.HEIGHT) and coord[1] in range(Matrix.WIDTH):
                 self.matrix[coord[0]][coord[1]] = self.piece["shape"]
+
+    def move_piece(self, direction):
+        self.remove_piece()
+        for coord in self.piece["coords"]:
+            if direction == "DOWN":
+                coord[0] += 1
+            elif direction == "UP":
+                coord[0] -= 1
+            elif direction == "LEFT":
+                coord[1] -= 1
+            elif direction == "RIGHT":
+                coord[1] += 1
+        self.add_piece()
+
+    def get_temp_moved_piece(self, direction):
+        temp_moved_piece = copy.deepcopy(self.piece)
+        for coord in temp_moved_piece["coords"]:
+            if direction == "DOWN":
+                coord[0] += 1
+            elif direction == "UP":
+                coord[0] -= 1
+            elif direction == "LEFT":
+                coord[1] -= 1
+            elif direction == "RIGHT":
+                coord[1] += 1
+
+        # for coord in new_piece:
+        #     if coord[1] not in range(Matrix.WIDTH):
+        #         new_piece = self.piece
+        #         break
+
+        return temp_moved_piece
 
     def spawn_piece(self):
         self.piece = self.get_rand_piece()
-        ## TEMP! JUST MAKE IT SHOW
+        # if piece part of stack, move up one
+        if self.is_inside_stack(self.piece):
+            for coord in self.piece["coords"]:
+                coord[0] -= 1
+        # if piece still part of stack, move up one
+        if self.is_inside_stack(self.piece):
+            for coord in self.piece["coords"]:
+                coord[0] -= 1
+        # if still inside top of stack, end game.
+        if self.is_inside_stack(self.piece):
+            self.end_game()
+
         for coord in self.piece["coords"]:
             if coord[0] in range(Matrix.HEIGHT) and coord[1] in range(Matrix.WIDTH):
                 self.matrix[coord[0]][coord[1]] = self.piece["shape"]
-        # if piece part of ground, move up one
-        # if piece still part of ground, move up one
-        # if piece completely off screen, end game.
+
+    def end_game(self):
+        print("GAME_OVER")
+        self.game_over = True
 
     def get_rand_piece(self):
         rand_piece = choice(list(self.pieces.keys()))
@@ -132,8 +191,8 @@ class Matrix:
             "coords": [[x[0], x[1]] for x in self.pieces[rand_piece]],
         }
 
-    def add_to_ground(self):
-        # add piece to ground, null piece.
+    def add_to_stack(self):
+        # add piece to stack, null piece.
         # check for tetrises
         pass
 
@@ -143,7 +202,9 @@ class Matrix:
 
 if __name__ == "__main__":
     matrix = Matrix()
+    matrix.sleep = 0.05
 
-    for i in range(5):
+    no_infinite_loop = 0
+    while matrix.game_over is False and no_infinite_loop < 200:
         matrix.step()
-    #     matrix.move_piece_in_matrix("RIGHT")
+        no_infinite_loop += 1
