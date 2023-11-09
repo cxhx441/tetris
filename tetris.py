@@ -9,6 +9,97 @@ import copy
 def clear_screen():
     os.system("cls" if os.name == "nt" else "clear")
 
+class Piece:
+    shape = None
+    def __init__(self):
+        self.local_coords = [[0, 0], [0, 0], [0, 0], [0, 0]]
+        self.x = 0 # right
+        self.y = 0 # down
+        self.rotation = 0
+
+    def get_coords(self):
+        """ get translated and rotated coordinates for the piece. """
+        rotated_coords = self._get_rotated_coords()
+        translated_coords = [[coord[0]+self.x, coord[1]+self.y] for coord in rotated_coords ]
+        return translated_coords
+
+    def _get_rotated_coords(self):
+        rotated_coords = [coord.copy() for coord in self.local_coords]
+        for _ in range(abs(self.rotation)):
+            for coord in rotated_coords:
+                x, y = coord
+                if self.rotation >= 0: # 90° clockwise rotation: (x,y) becomes (y,−x)
+                    coord[0], coord[1] = y, -x
+                elif self.rotation < 0: # 90° counterclockwise rotation: (x,y) becomes (−y,x)
+                    coord[0], coord[1] = -y, x
+        return rotated_coords
+
+    def rotate(self, direction):
+        """
+        Rotation right or left by 90 degrees.
+        direction must be "CLOCKWISE" or "COUNTER_CLOCKWISE".
+        """
+        if direction == "CLOCKWISE":
+            self.rotation += 1
+            self.rotation %= 3
+        elif direction == "COUNTER_CLOCKWISE":
+            self.rotation -= 1
+            self.rotation = -1 * (abs(self.rotation) % 4)
+
+    def set_x_y(self, x, y):
+        """ set piece from current location to x, y """
+        self.x = x
+        self.y = y
+
+    def shift_x_y(self, x, y):
+        """ Shift piece from origin by x, y """
+        self.x += x
+        self.y += y
+
+
+
+class I_Piece(Piece):
+    Piece.shape = "I"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[0, -2], [0, -1], [0, 0], [0, 1]]
+
+class J_Piece(Piece):
+    Piece.shape = "J"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[-1, -2], [0, -2], [0, -1], [0, 0]]
+
+class L_Piece(Piece):
+    Piece.shape = "L"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[0, -2], [0, -1], [0, 0], [-1, 0]]
+
+class O_Piece(Piece):
+    Piece.shape = "O"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[-1, -1], [0, -1], [0, 0], [-1, 0]]
+
+class S_Piece(Piece):
+    Piece.shape = "S"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[0, -2], [0, -1], [-1, -1], [-1, 0]]
+
+class T_Piece(Piece):
+    Piece.shape = "T"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[0, -2], [0, -1], [0, 0], [-1, -1]]
+
+class Z_Piece(Piece):
+    Piece.shape = "Z"
+    def __init__(self):
+        Piece.__init__(self)
+        self.coords = [[-1, -2], [-1, -1], [0, -1], [0, 0]]
+
 
 class Matrix:
     EMPTY_SPACE = " "
@@ -268,3 +359,4 @@ if __name__ == "__main__":
     keyboard.add_hotkey("x", matrix.end_game)
     matrix.run()
     keyboard.unkook_all()
+
