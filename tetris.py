@@ -14,7 +14,7 @@ class Matrix:
     EMPTY_SPACE = " "
     LR_BORDER = "|"
     TOP_BORDER = "_"
-    BOTTOM_BORDER = "\u0305"
+    BOTTOM_BORDER = "\u0305" # overbar
     WIDTH = 10
     HEIGHT = 16
     pieces = {
@@ -151,6 +151,42 @@ class Matrix:
                 coord[1] += 1
         self.add_piece()
 
+    def user_rotate_piece(self, direction):
+        """
+        90° clockwise rotation: (x,y) becomes (y,−x)
+        90° counterclockwise rotation: (x,y) becomes (−y,x)
+        """
+        self.remove_piece()
+        min_x, min_y = float("inf"), float("inf"),
+        max_x, max_y = -float("inf"), -float("inf")
+        temp_piece = copy.deepcopy(self.piece)
+        for coord in temp_piece["coords"]:
+            min_x = min(min_x, coord[0])
+            min_y = min(min_y, coord[1])
+            max_x = max(max_x, coord[0])
+            max_y = max(max_y, coord[1])
+        mid_x, mid_y = (max_x-min_x // 2), (max_x-min_x // 2)
+
+        if direction == "CLOCKWISE":
+            for coord in temp_piece["coords"]:
+                x, y = coord
+                x, y = x-mid_x-1, y-mid_y-1
+                x, y = y, -x
+                x, y = x + mid_x+1, y + mid_y+1
+                coord[0], coord[1] = x, y
+        elif direction == "COUNTER_CLOCKWISE":
+            for coord in temp_piece["coords"]:
+                x, y = coord
+                x, y = x-mid_x-1, y-mid_y-1
+                x, y = -y, x
+                x, y = x + mid_x+1, y + mid_y+1
+                coord[0], coord[1] = x, y
+
+        self.piece = temp_piece
+        self.add_piece()
+        self.draw_screen()
+
+
     def user_move_piece(self, direction):
         temp_moved_piece = self.get_temp_moved_piece(direction)
         if self.is_inside_stack(temp_moved_piece) or self.is_outside_bounds(
@@ -216,11 +252,6 @@ class Matrix:
             "coords": [[x[0], x[1]] for x in self.pieces[rand_piece]],
         }
 
-    def add_to_stack(self):
-        # add piece to stack, null piece.
-        # check for tetrises
-        pass
-
     def check_for_tetrises(self):
         pass
 
@@ -232,6 +263,8 @@ if __name__ == "__main__":
     keyboard.add_hotkey("d", lambda: matrix.user_move_piece("RIGHT"))
     keyboard.add_hotkey("a", lambda: matrix.user_move_piece("LEFT"))
     keyboard.add_hotkey("s", lambda: matrix.user_move_piece("DOWN"))
+    keyboard.add_hotkey("q", lambda: matrix.user_rotate_piece("COUNTER_CLOCKWISE"))
+    keyboard.add_hotkey("e", lambda: matrix.user_rotate_piece("CLOCKWISE"))
     keyboard.add_hotkey("x", matrix.end_game)
     matrix.run()
     keyboard.unkook_all()
