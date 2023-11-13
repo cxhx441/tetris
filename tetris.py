@@ -343,9 +343,9 @@ class Matrix:
         self.piece = Piece()
         self.piece.set_row_col(2, Matrix.WIDTH // 2)
         if self.is_inside_stack(self.piece):
-            self.piece.shift_row_col(1, 0)
+            self.piece.shift_row_col(-1, 0)
         if self.is_inside_stack(self.piece):
-            self.piece.shift_row_col(1, 0)
+            self.piece.shift_row_col(-1, 0)
         if self.is_inside_stack(self.piece):
             self.end_game()
         self.add_piece()
