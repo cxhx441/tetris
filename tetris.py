@@ -67,12 +67,9 @@ class Piece:
 
     def set_random_piece(self):
         self.shape = choice("IJLOSTZ")
-        self.shape = choice("Z")
-        self.local_coords = Piece.shapes[self.shape][0]
 
     def set_piece(self, shape: str):
         self.shape = shape.upper()
-        self.local_coords = Piece.shapes[self.shape][0]
 
     def get_coords(self):
         """get translated and rotated coordinates for the piece."""
@@ -114,6 +111,14 @@ class Piece:
         self.row += row
         self.col += col
 
+    def clone(self):
+        cloned_piece = Piece()
+        cloned_piece.shape = self.shape
+        cloned_piece.row = self.row
+        cloned_piece.col = self.col
+        cloned_piece.rotation = self.rotation
+        return cloned_piece
+
 
 class Matrix:
     EMPTY_SPACE = " "
@@ -131,7 +136,28 @@ class Matrix:
         "T": text_colors.MAGENTA,
         "Z": text_colors.RED,
     }
-
+    wall_kicks = {
+        "JLTSZ" : {
+            (0, 1): ((0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)),
+            (1, 0): ((0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)),
+            (1, 2): ((0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)),
+            (2, 1): ((0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)),
+            (2, 3): ((0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)),
+            (3, 2): ((0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)),
+            (3, 0): ((0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)),
+            (0, 3): ((0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)),
+        },
+        "I" : {
+            (0, 1): ((0, 0), (0, -2), (0, 1), (-1, -2), (2, 1)),
+            (1, 0): ((0, 0), (0, 2), (0, -1), (1, 2), (-2, -1)),
+            (1, 2): ((0, 0), (0, -1), (0, 2), (2, -1), (-1, 2)),
+            (2, 1): ((0, 0), (0, 1), (0, -2), (-2, 1), (1, -2)),
+            (2, 3): ((0, 0), (0, 2), (0, -1), (1, 2), (-2, -1)),
+            (3, 2): ((0, 0), (0, -2), (0, 1), (-1, -2), (2, 1)),
+            (3, 0): ((0, 0), (0, 1), (0, -2), (-2, 1), (1, -2)),
+            (0, 3): ((0, 0), (0, -1), (0, 2), (2, -1), (-1, 2)),
+        }
+    }
     def __init__(self):
         self.matrix = [
             [Matrix.EMPTY_SPACE] * Matrix.WIDTH for _ in range(Matrix.HEIGHT)
@@ -236,8 +262,32 @@ class Matrix:
 
     def user_rotate_piece(self, direction: str):
         self.remove_piece()
-        self.piece.rotate(direction)
-        # if not good, unrotate
+        test_piece = self.piece.clone()
+        from_rotation = test_piece.rotation
+        test_piece.rotate(direction)
+        to_rotation = test_piece.rotation
+
+        if test_piece.shape == "I":
+            for kick in Matrix.wall_kicks["I"][(from_rotation, to_rotation)]:
+                test_piece.shift_row_col(kick[0], kick[1])
+                if not self.is_inside_stack(test_piece) and \
+                    not self.is_outside_bounds(test_piece):
+                    self.piece = test_piece
+                    self.add_piece()
+                    self.draw_screen()
+                    return
+                test_piece.shift_row_col(-kick[0], -kick[1])
+
+        else:
+            for kick in Matrix.wall_kicks["JLTSZ"][(from_rotation, to_rotation)]:
+                test_piece.shift_row_col(kick[0], kick[1])
+                if not self.is_inside_stack(test_piece) and \
+                    not self.is_outside_bounds(test_piece):
+                    self.piece = test_piece
+                    self.add_piece()
+                    self.draw_screen()
+                    return
+                test_piece.shift_row_col(-kick[0], -kick[1])
         self.add_piece()
         self.draw_screen()
 
