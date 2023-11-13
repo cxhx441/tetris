@@ -78,16 +78,6 @@ class Piece:
             for coord in self.shapes[self.shape][self.rotation]
         ]
 
-    # def _get_rotated_coords(self):
-    #     rotated_coords = [coord.copy() for coord in self.local_coords]
-    #     for _ in range(self.rotation):
-    #         for coord in rotated_coords:
-    #             row, col = coord
-    #             # 90° clockwise rotation: (row,col) becomes (-col, row)
-    #             if (self.rotation >= 0):
-    #                 coord[0], coord[1] = col, -row
-    #     return rotated_coords
-
     def rotate(self, direction):
         """
         Rotation right or left by 90 degrees.
