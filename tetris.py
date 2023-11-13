@@ -251,6 +251,7 @@ class Matrix:
         self.update_top_of_stack()
 
     def update_top_of_stack(self):
+        self.top_of_stack = [Matrix.HEIGHT] * Matrix.WIDTH
         for coords in self.stack.values():
             for coord in coords:
                 existing = self.top_of_stack[coord[1]]
