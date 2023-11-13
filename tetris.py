@@ -10,14 +10,51 @@ def clear_screen():
 
 
 class Piece:
+    """Shapes holds the shape (ie "I") and the coordinates of it's rotation around the origin 0, 0"""
+
     shapes = {
-        "I": [[0, -2], [0, -1], [0, 0], [0, 1]],
-        "J": [[-1, -2], [-1, -1], [0, -1], [0, 0]],
-        "L": [[0, -2], [0, -1], [0, 0], [-1, -1]],
-        "S": [[0, -2], [0, -1], [-1, -1], [-1, 0]],
-        "O": [[-1, -1], [0, -1], [0, 0], [-1, 0]],
-        "T": [[0, -2], [0, -1], [0, 0], [-1, 0]],
-        "Z": [[-1, -2], [0, -2], [0, -1], [0, 0]],
+        "I": {
+            0: [[0, -2], [0, -1], [0, 0], [0, 1]],
+            1: [[-1, 0], [0, 0], [1, 0], [2, 0]],
+            2: [[1, -2], [1, -1], [1, 0], [1, 1]],
+            3: [[-1, -1], [0, -1], [1, -1], [2, -1]],
+        },
+        "J": {
+            0: [[-1, -2], [0, -2], [0, -1], [0, 0]],
+            1: [[-1, -1], [0, -1], [1, -1], [-1, 0]],
+            2: [[0, -2], [0, -1], [0, 0], [1, 0]],
+            3: [[-1, -1], [0, -1], [1, -1], [1, -2]],
+        },
+        "L": {
+            0: [[0, -2], [0, -1], [0, 0], [-1, 0]],
+            1: [[-1, -1], [0, -1], [1, -1], [1, 0]],
+            2: [[0, -2], [0, -1], [0, 0], [1, -2]],
+            3: [[-1, -1], [0, -1], [1, -1], [-1, -2]],
+        },
+        "O": {
+            0: [[-1, -1], [0, -1], [0, 0], [-1, 0]],
+            1: [[-1, -1], [0, -1], [0, 0], [-1, 0]],
+            2: [[-1, -1], [0, -1], [0, 0], [-1, 0]],
+            3: [[-1, -1], [0, -1], [0, 0], [-1, 0]],
+        },
+        "S": {
+            0: [[0, -2], [0, -1], [-1, -1], [-1, 0]],
+            1: [[-1, -1], [0, -1], [0, 0], [1, 0]],
+            2: [[1, -2], [1, -1], [0, -1], [0, 0]],
+            3: [[-1, -2], [0, -2], [0, -1], [1, -1]],
+        },
+        "T": {
+            0: [[0, -2], [0, -1], [0, 0], [-1, -1]],
+            1: [[-1, -1], [0, -1], [1, -1], [0, 0]],
+            2: [[0, -2], [0, -1], [0, 0], [1, -1]],
+            3: [[-1, -1], [0, -1], [1, -1], [0, -2]],
+        },
+        "Z": {
+            0: [[-1, -2], [-1, -1], [0, -1], [0, 0]],
+            1: [[-1, 0], [0, 0], [0, -1], [1, -1]],
+            2: [[0, -2], [0, -1], [1, -1], [1, 0]],
+            3: [[-1, -1], [0, -1], [0, -2], [1, -2]],
+        },
     }
 
     def __init__(self):
@@ -30,32 +67,29 @@ class Piece:
 
     def set_random_piece(self):
         self.shape = choice("IJLOSTZ")
-        self.local_coords = Piece.shapes[self.shape]
+        self.shape = choice("Z")
+        self.local_coords = Piece.shapes[self.shape][0]
 
     def set_piece(self, shape: str):
         self.shape = shape.upper()
-        self.local_coords = Piece.shapes[self.shape]
+        self.local_coords = Piece.shapes[self.shape][0]
 
     def get_coords(self):
         """get translated and rotated coordinates for the piece."""
-        rotated_coords = self._get_rotated_coords()
-        translated_coords = [
-            [coord[0] + self.row, coord[1] + self.col] for coord in rotated_coords
+        return [
+            [coord[0] + self.row, coord[1] + self.col]
+            for coord in self.shapes[self.shape][self.rotation]
         ]
-        return translated_coords
 
-    def _get_rotated_coords(self):
-        rotated_coords = [coord.copy() for coord in self.local_coords]
-        for _ in range(abs(self.rotation)):
-            for coord in rotated_coords:
-                row, col = coord
-                # 90° clockwise rotation: (row,col) becomes (-col, row)
-                if (self.rotation >= 0):
-                    coord[0], coord[1] = col, -row
-                # 90° counterclockwise rotation: (row,col) becomes (col, −row)
-                elif (self.rotation < 0):
-                    coord[0], coord[1] = -col, row
-        return rotated_coords
+    # def _get_rotated_coords(self):
+    #     rotated_coords = [coord.copy() for coord in self.local_coords]
+    #     for _ in range(self.rotation):
+    #         for coord in rotated_coords:
+    #             row, col = coord
+    #             # 90° clockwise rotation: (row,col) becomes (-col, row)
+    #             if (self.rotation >= 0):
+    #                 coord[0], coord[1] = col, -row
+    #     return rotated_coords
 
     def rotate(self, direction):
         """
@@ -64,10 +98,11 @@ class Piece:
         """
         if direction == "CLOCKWISE":
             self.rotation += 1
-            self.rotation %= 3
+            self.rotation %= 4
         elif direction == "COUNTER_CLOCKWISE":
             self.rotation -= 1
-            self.rotation = -1 * (abs(self.rotation) % 4)
+            if self.rotation == -1:
+                self.rotation = 3
 
     def set_row_col(self, row, col):
         """set piece from current location to x, y"""
@@ -258,4 +293,4 @@ if __name__ == "__main__":
     keyboard.add_hotkey("e", lambda: matrix.user_rotate_piece("CLOCKWISE"))
     keyboard.add_hotkey("x", matrix.end_game)
     matrix.run()
-    keyboard.unkook_all()
+    keyboard.unhook_all()
