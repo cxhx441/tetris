@@ -216,6 +216,31 @@ class Matrix:
         if self.game_over is not True:
             self.draw_screen()
 
+    def handle_tetris(self):
+        elim = []
+        for row in range(len(self.matrix)):
+            filled = 0
+            for col in range(len(self.matrix[row])):
+                if self.matrix[row][col] != Matrix.EMPTY_SPACE:
+                    filled += 1
+            if filled == Matrix.WIDTH:
+                elim.append(row)
+        for row in elim:
+            for col in range(Matrix.WIDTH):
+                shape = self.matrix[row][col]
+                self.stack[shape].remove([row, col])
+            del self.matrix[row]
+            self.matrix.insert(0, [Matrix.EMPTY_SPACE]*Matrix.WIDTH)
+            for shape in self.stack:
+                for coord in self.stack[shape]:
+                    if coord[0] < row:
+                        coord[0] += 1
+        self.update_top_of_stack()
+
+        # check each row in matrix, if all columns filled, elim that row
+        # move all blocks above this row down by one
+        # if it was an i-block and four rows are eliminated TETRIS!!!
+
     def add_piece_to_matrix(self, piece: Piece):
         for coord in piece.get_coords():
             self.matrix[coord[0]][coord[1]] = piece.shape
