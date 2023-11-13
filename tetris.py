@@ -210,7 +210,7 @@ class Matrix:
             self.piece.shift_row_col(-1, 0)
             self.add_piece_to_stack(self.piece)
             self.add_piece_to_matrix(self.piece)
-            # self.handle_tetris()
+            self.handle_tetris()
             self.spawn_piece()
         self.add_piece()
         if self.game_over is not True:
