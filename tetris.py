@@ -301,6 +301,14 @@ class Matrix:
         self.add_piece()
         self.draw_screen()
 
+    def user_hard_drop_piece(self):
+        self.remove_piece()
+        while not self.is_inside_stack(self.piece) and not self.is_outside_bounds(self.piece):
+            self.piece.shift_row_col(1, 0)
+        self.piece.shift_row_col(-1, 0)
+        self.add_piece()
+        self.draw_screen()
+
     def is_outside_bounds(self, piece):
         for coord in piece.get_coords():
             if coord[0] not in range(Matrix.HEIGHT) or coord[1] not in range(
@@ -337,6 +345,7 @@ if __name__ == "__main__":
     keyboard.add_hotkey("d", lambda: matrix.user_move_piece(0, 1))
     keyboard.add_hotkey("a", lambda: matrix.user_move_piece(0, -1))
     keyboard.add_hotkey("s", lambda: matrix.user_move_piece(1, 0))
+    keyboard.add_hotkey("space", matrix.user_hard_drop_piece)
     keyboard.add_hotkey("q", lambda: matrix.user_rotate_piece("COUNTER_CLOCKWISE"))
     keyboard.add_hotkey("e", lambda: matrix.user_rotate_piece("CLOCKWISE"))
     keyboard.add_hotkey("x", matrix.end_game)
