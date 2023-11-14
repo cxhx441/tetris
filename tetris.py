@@ -344,10 +344,6 @@ class Matrix:
         print("GAME_OVER")
         self.game_over = True
 
-    def check_for_tetrises(self):
-        pass
-
-
 if __name__ == "__main__":
     matrix = Matrix()
     matrix.sleep_ms = 1000
