@@ -10,7 +10,10 @@ def clear_screen():
 
 
 class Piece:
-    """Shapes holds the shape (ie "I") and the coordinates of it's rotation around the origin 0, 0"""
+    """
+    Shapes holds the shape (ie "I") and the coordinates of it's rotation around the origin 0, 0
+    0, 1, 2, 3 are the rotations. increments are clockwise.
+    """
 
     shapes = {
         "I": {
