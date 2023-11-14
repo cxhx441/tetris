@@ -117,7 +117,7 @@ class Matrix:
     BOTTOM_BORDER = "\u0305"  # overbar
     WIDTH = 10
     HEIGHT = 16
-    piece_colors = {
+    PIECE_COLORS = {
         "I": text_colors.CYAN,
         "J": text_colors.BLUE,
         "L": text_colors.WHITE,
@@ -126,8 +126,8 @@ class Matrix:
         "T": text_colors.MAGENTA,
         "Z": text_colors.RED,
     }
-    wall_kicks = {
-        "JLTSZ" : {
+    WALL_KICKS = {
+        "JLTSZ": {
             (0, 1): ((0, 0), (0, -1), (1, -1), (-2, 0), (-2, -1)),
             (1, 0): ((0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)),
             (1, 2): ((0, 0), (0, 1), (-1, 1), (2, 0), (2, 1)),
@@ -137,7 +137,7 @@ class Matrix:
             (3, 0): ((0, 0), (0, -1), (-1, -1), (2, 0), (2, -1)),
             (0, 3): ((0, 0), (0, 1), (1, 1), (-2, 0), (-2, 1)),
         },
-        "I" : {
+        "I": {
             (0, 1): ((0, 0), (0, -2), (0, 1), (-1, -2), (2, 1)),
             (1, 0): ((0, 0), (0, 2), (0, -1), (1, 2), (-2, -1)),
             (1, 2): ((0, 0), (0, -1), (0, 2), (2, -1), (-1, 2)),
@@ -146,8 +146,9 @@ class Matrix:
             (3, 2): ((0, 0), (0, -2), (0, 1), (-1, -2), (2, 1)),
             (3, 0): ((0, 0), (0, 1), (0, -2), (-2, 1), (1, -2)),
             (0, 3): ((0, 0), (0, -1), (0, 2), (2, -1), (-1, 2)),
-        }
+        },
     }
+
     def __init__(self):
         self.matrix = [
             [Matrix.EMPTY_SPACE] * Matrix.WIDTH for _ in range(Matrix.HEIGHT)
@@ -186,7 +187,7 @@ class Matrix:
             mat_chrs.append(Matrix.LR_BORDER)
             for char in self.matrix[row]:
                 if char in Piece.shapes:
-                    mat_chrs += [self.piece_colors[char], char, text_colors.ENDC]
+                    mat_chrs += [self.PIECE_COLORS[char], char, text_colors.ENDC]
                 else:
                     mat_chrs.append(char)
             mat_chrs += [Matrix.LR_BORDER, "\n"]
@@ -220,7 +221,7 @@ class Matrix:
                 shape = self.matrix[row][col]
                 self.stack[shape].remove([row, col])
             del self.matrix[row]
-            self.matrix.insert(0, [Matrix.EMPTY_SPACE]*Matrix.WIDTH)
+            self.matrix.insert(0, [Matrix.EMPTY_SPACE] * Matrix.WIDTH)
             for shape in self.stack:
                 for coord in self.stack[shape]:
                     if coord[0] < row:
@@ -284,10 +285,11 @@ class Matrix:
         to_rotation = test_piece.rotation
 
         if test_piece.shape == "I":
-            for kick in Matrix.wall_kicks["I"][(from_rotation, to_rotation)]:
+            for kick in Matrix.WALL_KICKS["I"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
-                if not self.is_inside_stack(test_piece) and \
-                    not self.is_outside_bounds(test_piece):
+                if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
+                    test_piece
+                ):
                     self.piece = test_piece
                     self.add_piece()
                     self.draw_screen()
@@ -295,10 +297,11 @@ class Matrix:
                 test_piece.shift_row_col(-kick[0], -kick[1])
 
         else:
-            for kick in Matrix.wall_kicks["JLTSZ"][(from_rotation, to_rotation)]:
+            for kick in Matrix.WALL_KICKS["JLTSZ"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
-                if not self.is_inside_stack(test_piece) and \
-                    not self.is_outside_bounds(test_piece):
+                if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
+                    test_piece
+                ):
                     self.piece = test_piece
                     self.add_piece()
                     self.draw_screen()
@@ -343,6 +346,7 @@ class Matrix:
     def end_game(self):
         print("GAME_OVER")
         self.game_over = True
+
 
 if __name__ == "__main__":
     matrix = Matrix()
