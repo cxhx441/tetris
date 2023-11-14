@@ -163,8 +163,6 @@ class Matrix:
             "Z": [],
         }
 
-        self.top_of_stack = [Matrix.HEIGHT] * Matrix.WIDTH
-
         self.piece = None
         self.spawn_piece()
         self.game_over = False
@@ -197,7 +195,7 @@ class Matrix:
     def step(self):
         self.remove_piece()
         self.piece.shift_row_col(1, 0)
-        if self.is_inside_top_of_stack(self.piece):
+        if self.is_inside_stack(self.piece) or self.is_outside_bounds(self.piece):
             self.piece.shift_row_col(-1, 0)
             self.add_piece_to_stack(self.piece)
             self.add_piece_to_matrix(self.piece)
@@ -226,7 +224,6 @@ class Matrix:
                 for coord in self.stack[shape]:
                     if coord[0] < row:
                         coord[0] += 1
-        self.update_top_of_stack()
 
         # check each row in matrix, if all columns filled, elim that row
         # move all blocks above this row down by one
@@ -239,21 +236,6 @@ class Matrix:
     def add_piece_to_stack(self, piece: Piece):
         for coord in piece.get_coords():
             self.stack[piece.shape].append(coord)
-        self.update_top_of_stack()
-
-    def update_top_of_stack(self):
-        self.top_of_stack = [Matrix.HEIGHT] * Matrix.WIDTH
-        for coords in self.stack.values():
-            for coord in coords:
-                existing = self.top_of_stack[coord[1]]
-                new = coord[0]
-                self.top_of_stack[coord[1]] = min(new, existing)
-
-    def is_inside_top_of_stack(self, piece: Piece):
-        for coord in piece.get_coords():
-            if self.top_of_stack[coord[1]] == coord[0]:
-                return True
-        return False
 
     def is_inside_stack(self, piece: Piece):
         """if intersection of coords and stack is not empty, True"""
