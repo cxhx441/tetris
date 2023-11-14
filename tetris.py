@@ -71,9 +71,6 @@ class Piece:
     def set_random_piece(self):
         self.shape = choice("IJLOSTZ")
 
-    def set_piece(self, shape: str):
-        self.shape = shape.upper()
-
     def get_coords(self):
         """get translated and rotated coordinates for the piece."""
         return [
