@@ -110,7 +110,7 @@ class Piece:
         return cloned_piece
 
 
-class Matrix:
+class Playfield:
     EMPTY_SPACE = " "
     LR_BORDER = "|"
     TOP_BORDER = "_"
@@ -151,7 +151,7 @@ class Matrix:
 
     def __init__(self):
         self.matrix = [
-            [Matrix.EMPTY_SPACE] * Matrix.WIDTH for _ in range(Matrix.HEIGHT)
+            [Playfield.EMPTY_SPACE] * Playfield.WIDTH for _ in range(Playfield.HEIGHT)
         ]
         self.stack = {
             "I": [],
@@ -180,16 +180,16 @@ class Matrix:
 
     def __str__(self):
         mat_chrs = []
-        mat_chrs += [Matrix.TOP_BORDER * (Matrix.WIDTH + 2), ("\n")]
-        for row in range(Matrix.HEIGHT):
-            mat_chrs.append(Matrix.LR_BORDER)
+        mat_chrs += [Playfield.TOP_BORDER * (Playfield.WIDTH + 2), ("\n")]
+        for row in range(Playfield.HEIGHT):
+            mat_chrs.append(Playfield.LR_BORDER)
             for char in self.matrix[row]:
                 if char in Piece.shapes:
                     mat_chrs += [self.PIECE_COLORS[char], char, text_colors.ENDC]
                 else:
                     mat_chrs.append(char)
-            mat_chrs += [Matrix.LR_BORDER, "\n"]
-        mat_chrs += ["\u0305" * (Matrix.WIDTH + 2), "\n"]  # \u0305 == overbar
+            mat_chrs += [Playfield.LR_BORDER, "\n"]
+        mat_chrs += ["\u0305" * (Playfield.WIDTH + 2), "\n"]  # \u0305 == overbar
         return "".join(mat_chrs)
 
     def step(self):
@@ -210,24 +210,21 @@ class Matrix:
         for row in range(len(self.matrix)):
             filled = 0
             for col in range(len(self.matrix[row])):
-                if self.matrix[row][col] != Matrix.EMPTY_SPACE:
+                if self.matrix[row][col] != Playfield.EMPTY_SPACE:
                     filled += 1
-            if filled == Matrix.WIDTH:
+            if filled == Playfield.WIDTH:
                 elim.append(row)
         for row in elim:
-            for col in range(Matrix.WIDTH):
+            for col in range(Playfield.WIDTH):
                 shape = self.matrix[row][col]
                 self.stack[shape].remove([row, col])
             del self.matrix[row]
-            self.matrix.insert(0, [Matrix.EMPTY_SPACE] * Matrix.WIDTH)
+            self.matrix.insert(0, [Playfield.EMPTY_SPACE] * Playfield.WIDTH)
             for shape in self.stack:
                 for coord in self.stack[shape]:
                     if coord[0] < row:
                         coord[0] += 1
 
-        # check each row in matrix, if all columns filled, elim that row
-        # move all blocks above this row down by one
-        # if it was an i-block and four rows are eliminated TETRIS!!!
 
     def add_piece_to_matrix(self, piece: Piece):
         for coord in piece.get_coords():
@@ -251,12 +248,12 @@ class Matrix:
 
     def remove_piece(self):
         for coord in self.piece.get_coords():
-            if coord[0] in range(Matrix.HEIGHT) and coord[1] in range(Matrix.WIDTH):
-                self.matrix[coord[0]][coord[1]] = Matrix.EMPTY_SPACE
+            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(Playfield.WIDTH):
+                self.matrix[coord[0]][coord[1]] = Playfield.EMPTY_SPACE
 
     def add_piece(self):
         for coord in self.piece.get_coords():
-            if coord[0] in range(Matrix.HEIGHT) and coord[1] in range(Matrix.WIDTH):
+            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(Playfield.WIDTH):
                 self.matrix[coord[0]][coord[1]] = self.piece.shape
 
     def user_rotate_piece(self, direction: str):
@@ -267,7 +264,7 @@ class Matrix:
         to_rotation = test_piece.rotation
 
         if test_piece.shape == "I":
-            for kick in Matrix.WALL_KICKS["I"][(from_rotation, to_rotation)]:
+            for kick in Playfield.WALL_KICKS["I"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
                 if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
                     test_piece
@@ -279,7 +276,7 @@ class Matrix:
                 test_piece.shift_row_col(-kick[0], -kick[1])
 
         else:
-            for kick in Matrix.WALL_KICKS["JLTSZ"][(from_rotation, to_rotation)]:
+            for kick in Playfield.WALL_KICKS["JLTSZ"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
                 if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
                     test_piece
@@ -311,8 +308,8 @@ class Matrix:
 
     def is_outside_bounds(self, piece):
         for coord in piece.get_coords():
-            if coord[0] not in range(Matrix.HEIGHT) or coord[1] not in range(
-                Matrix.WIDTH
+            if coord[0] not in range(Playfield.HEIGHT) or coord[1] not in range(
+                Playfield.WIDTH
             ):
                 return True
         return False
@@ -324,7 +321,7 @@ class Matrix:
         if still inside top of stack, end game.
         """
         self.piece = Piece()
-        self.piece.set_row_col(2, Matrix.WIDTH // 2)
+        self.piece.set_row_col(2, Playfield.WIDTH // 2)
         if self.is_inside_stack(self.piece):
             self.piece.shift_row_col(-1, 0)
         if self.is_inside_stack(self.piece):
@@ -338,16 +335,23 @@ class Matrix:
         self.game_over = True
 
 
-if __name__ == "__main__":
-    matrix = Matrix()
-    matrix.sleep_ms = 1000
+#class App:
 
-    keyboard.add_hotkey("d", lambda: matrix.user_move_piece(0, 1))
-    keyboard.add_hotkey("a", lambda: matrix.user_move_piece(0, -1))
-    keyboard.add_hotkey("s", lambda: matrix.user_move_piece(1, 0))
-    keyboard.add_hotkey("space", matrix.user_hard_drop_piece)
-    keyboard.add_hotkey("q", lambda: matrix.user_rotate_piece("COUNTER_CLOCKWISE"))
-    keyboard.add_hotkey("e", lambda: matrix.user_rotate_piece("CLOCKWISE"))
-    keyboard.add_hotkey("x", matrix.end_game)
-    matrix.run()
+
+
+
+
+
+if __name__ == "__main__":
+    playfield = Playfield()
+    playfield.sleep_ms = 1000
+
+    keyboard.add_hotkey("d", lambda: playfield.user_move_piece(0, 1))
+    keyboard.add_hotkey("a", lambda: playfield.user_move_piece(0, -1))
+    keyboard.add_hotkey("s", lambda: playfield.user_move_piece(1, 0))
+    keyboard.add_hotkey("space", playfield.user_hard_drop_piece)
+    keyboard.add_hotkey("q", lambda: playfield.user_rotate_piece("COUNTER_CLOCKWISE"))
+    keyboard.add_hotkey("e", lambda: playfield.user_rotate_piece("CLOCKWISE"))
+    keyboard.add_hotkey("x", playfield.end_game)
+    playfield.run()
     keyboard.unhook_all()
