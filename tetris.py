@@ -60,16 +60,17 @@ class Piece:
         },
     }
 
-    def __init__(self):
-        self.shape = None
+    @staticmethod
+    def get_random_piece():
+        """ return a piece object with random shape. """
+        return Piece(choice("IJLOSTZ"))
+
+    def __init__(self, shape: str):
+        self.shape = shape
         self.local_coords = None
         self.row = 0  # right
         self.col = 0  # down
         self.rotation = 0
-        self.set_random_piece()
-
-    def set_random_piece(self):
-        self.shape = choice("IJLOSTZ")
 
     def get_coords(self):
         """get translated and rotated coordinates for the piece."""
@@ -102,7 +103,8 @@ class Piece:
         self.col += col
 
     def clone(self):
-        cloned_piece = Piece()
+        """ clone the piece. this is to avoid issues with deep copy. """
+        cloned_piece = Piece("I") # shape input doesn't matter
         cloned_piece.shape = self.shape
         cloned_piece.row = self.row
         cloned_piece.col = self.col
@@ -111,7 +113,8 @@ class Piece:
 
 
 class Playfield:
-    EMPTY_SPACE = " "
+    """ The space where the live piece and stack lives. """
+    EMPTY = " "
     LR_BORDER = "|"
     TOP_BORDER = "_"
     BOTTOM_BORDER = "\u0305"  # overbar
@@ -151,7 +154,7 @@ class Playfield:
 
     def __init__(self):
         self.matrix = [
-            [Playfield.EMPTY_SPACE] * Playfield.WIDTH for _ in range(Playfield.HEIGHT)
+            [Playfield.EMPTY] * Playfield.WIDTH for _ in range(Playfield.HEIGHT)
         ]
         self.stack = {
             "I": [],
@@ -162,21 +165,6 @@ class Playfield:
             "T": [],
             "Z": [],
         }
-
-        self.piece = None
-        self.spawn_piece()
-        self.game_over = False
-        self.sleep_ms = 1000
-
-    def run(self):
-        while self.game_over is not True:
-            self.listen_for_keys()
-            self.step()
-
-    def listen_for_keys(self):
-        end_time = round(time.time() * 1000) + self.sleep_ms
-        while round(time.time() * 1000) < end_time:
-            time.sleep(self.sleep_ms / 1000)
 
     def __str__(self):
         mat_chrs = []
@@ -192,45 +180,34 @@ class Playfield:
         mat_chrs += ["\u0305" * (Playfield.WIDTH + 2), "\n"]  # \u0305 == overbar
         return "".join(mat_chrs)
 
-    def step(self):
-        self.remove_piece()
-        self.piece.shift_row_col(1, 0)
-        if self.is_inside_stack(self.piece) or self.is_outside_bounds(self.piece):
-            self.piece.shift_row_col(-1, 0)
-            self.add_piece_to_stack(self.piece)
-            self.add_piece_to_matrix(self.piece)
-            self.handle_tetris()
-            self.spawn_piece()
-        self.add_piece()
-        if self.game_over is not True:
-            self.draw_screen()
-
     def handle_tetris(self):
+        """ Remove rows where all colums filled in. Update stack. """
+
+        # get rows to elimate
         elim = []
-        for row in range(len(self.matrix)):
+        for r_idx, row in enumerate(self.matrix):
             filled = 0
-            for col in range(len(self.matrix[row])):
-                if self.matrix[row][col] != Playfield.EMPTY_SPACE:
+            for el in row:
+                if el != Playfield.EMPTY:
                     filled += 1
             if filled == Playfield.WIDTH:
-                elim.append(row)
-        for row in elim:
-            for col in range(Playfield.WIDTH):
-                shape = self.matrix[row][col]
-                self.stack[shape].remove([row, col])
-            del self.matrix[row]
-            self.matrix.insert(0, [Playfield.EMPTY_SPACE] * Playfield.WIDTH)
-            for shape in self.stack:
-                for coord in self.stack[shape]:
-                    if coord[0] < row:
+                elim.append(r_idx)
+
+        # remove rows from matrix and stack
+        for r_idx in elim:
+            for c_idx in range(Playfield.WIDTH):
+                shape = self.matrix[r_idx][c_idx]
+                self.stack[shape].remove([r_idx, c_idx])
+            del self.matrix[r_idx]
+            self.matrix.insert(0, [Playfield.EMPTY] * Playfield.WIDTH)
+
+            for shape, coords in self.stack.items():
+                for coord in coords:
+                    if coord[0] < r_idx:
                         coord[0] += 1
 
-
-    def add_piece_to_matrix(self, piece: Piece):
-        for coord in piece.get_coords():
-            self.matrix[coord[0]][coord[1]] = piece.shape
-
     def add_piece_to_stack(self, piece: Piece):
+        """ add coords of piece to stack. """
         for coord in piece.get_coords():
             self.stack[piece.shape].append(coord)
 
@@ -242,22 +219,44 @@ class Playfield:
                     return True
         return False
 
-    def draw_screen(self):
-        clear_screen()
-        print(self)
+    def remove_piece(self, piece: Piece):
+        """ remove coords of piece matrix. """
+        for coord in piece.get_coords():
+            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(
+                Playfield.WIDTH
+            ):
+                self.matrix[coord[0]][coord[1]] = Playfield.EMPTY
 
-    def remove_piece(self):
-        for coord in self.piece.get_coords():
-            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(Playfield.WIDTH):
-                self.matrix[coord[0]][coord[1]] = Playfield.EMPTY_SPACE
+    def add_piece(self, piece):
+        """ add coords of piece matrix. """
+        for coord in piece.get_coords():
+            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(
+                Playfield.WIDTH
+            ):
+                self.matrix[coord[0]][coord[1]] = piece.shape
 
-    def add_piece(self):
-        for coord in self.piece.get_coords():
-            if coord[0] in range(Playfield.HEIGHT) and coord[1] in range(Playfield.WIDTH):
-                self.matrix[coord[0]][coord[1]] = self.piece.shape
+    def is_outside_bounds(self, piece):
+        """ check if piece is outside border. """
+        for coord in piece.get_coords():
+            if coord[0] not in range(Playfield.HEIGHT) or coord[1] not in range(
+                Playfield.WIDTH
+            ):
+                return True
+        return False
+
+
+class App:
+    """ class for handling the app. """
+    def __init__(self):
+        self.pf = Playfield()
+        self.piece = None
+        self.spawn_piece()
+        self.sleep_ms = 1000
+        self.game_over = False
 
     def user_rotate_piece(self, direction: str):
-        self.remove_piece()
+        """ rotate the piece in the specified direction. """
+        self.pf.remove_piece(self.piece)
         test_piece = self.piece.clone()
         from_rotation = test_piece.rotation
         test_piece.rotate(direction)
@@ -266,11 +265,11 @@ class Playfield:
         if test_piece.shape == "I":
             for kick in Playfield.WALL_KICKS["I"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
-                if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
+                if not self.pf.is_inside_stack(
                     test_piece
-                ):
+                ) and not self.pf.is_outside_bounds(test_piece):
                     self.piece = test_piece
-                    self.add_piece()
+                    self.pf.add_piece(self.piece)
                     self.draw_screen()
                     return
                 test_piece.shift_row_col(-kick[0], -kick[1])
@@ -278,80 +277,99 @@ class Playfield:
         else:
             for kick in Playfield.WALL_KICKS["JLTSZ"][(from_rotation, to_rotation)]:
                 test_piece.shift_row_col(kick[0], kick[1])
-                if not self.is_inside_stack(test_piece) and not self.is_outside_bounds(
+                if not self.pf.is_inside_stack(
                     test_piece
-                ):
+                ) and not self.pf.is_outside_bounds(test_piece):
                     self.piece = test_piece
-                    self.add_piece()
+                    self.pf.add_piece(self.piece)
                     self.draw_screen()
                     return
                 test_piece.shift_row_col(-kick[0], -kick[1])
-        self.add_piece()
+        self.pf.add_piece(self.piece)
         self.draw_screen()
 
+    def draw_screen(self):
+        """ draw the screen """
+        clear_screen()
+        print(self.pf)
+
     def user_move_piece(self, row, col):
-        self.remove_piece()
+        """ move piece by specified rows and cols. """
+        self.pf.remove_piece(self.piece)
         self.piece.shift_row_col(row, col)
-        if self.is_inside_stack(self.piece) or self.is_outside_bounds(self.piece):
+        if self.pf.is_inside_stack(self.piece) or self.pf.is_outside_bounds(
+            self.piece
+        ):
             self.piece.shift_row_col(-row, -col)
             return
-        self.add_piece()
+        self.pf.add_piece(self.piece)
         self.draw_screen()
 
     def user_hard_drop_piece(self):
-        self.remove_piece()
-        while not self.is_inside_stack(self.piece) and not self.is_outside_bounds(self.piece):
+        """ send the current piece to the top of the stack. """
+        self.pf.remove_piece(self.piece)
+        while not self.pf.is_inside_stack(
+            self.piece
+        ) and not self.pf.is_outside_bounds(self.piece):
             self.piece.shift_row_col(1, 0)
         self.piece.shift_row_col(-1, 0)
-        self.add_piece()
+        self.pf.add_piece(self.piece)
         self.draw_screen()
 
-    def is_outside_bounds(self, piece):
-        for coord in piece.get_coords():
-            if coord[0] not in range(Playfield.HEIGHT) or coord[1] not in range(
-                Playfield.WIDTH
-            ):
-                return True
-        return False
+    def step(self):
+        """move the piece down or add it to the stack if it can't go down. handle tetriss."""
+        self.pf.remove_piece(self.piece)
+        self.piece.shift_row_col(1, 0)
+        if self.pf.is_inside_stack(self.piece) or self.pf.is_outside_bounds(
+            self.piece
+        ):
+            self.piece.shift_row_col(-1, 0)
+            self.pf.add_piece_to_stack(self.piece)
+            self.pf.add_piece(self.piece)
+            self.pf.handle_tetris()
+            self.spawn_piece()
+        self.pf.add_piece(self.piece)
+        if self.game_over is not True:
+            self.draw_screen()
+
+    def run(self):
+        """run the instance."""
+        while self.game_over is not True:
+            self.listen_for_keys()
+            self.step()
+
+    def listen_for_keys(self):
+        """listen for input keys for specified amount of time."""
+        end_time = round(time.time() * 1000) + self.sleep_ms
+        while round(time.time() * 1000) < end_time:
+            time.sleep(self.sleep_ms / 1000)
 
     def spawn_piece(self):
-        """
-        if piece part of stack, move up one
-        if piece still part of stack, move up one
-        if still inside top of stack, end game.
-        """
-        self.piece = Piece()
+        """get new random piece and add it to the playfield, if fails, end game."""
+        self.piece = Piece.get_random_piece()
         self.piece.set_row_col(2, Playfield.WIDTH // 2)
-        if self.is_inside_stack(self.piece):
+        if self.pf.is_inside_stack(self.piece):
             self.piece.shift_row_col(-1, 0)
-        if self.is_inside_stack(self.piece):
+        if self.pf.is_inside_stack(self.piece):
             self.piece.shift_row_col(-1, 0)
-        if self.is_inside_stack(self.piece):
+        if self.pf.is_inside_stack(self.piece):
             self.end_game()
-        self.add_piece()
+        self.pf.add_piece(self.piece)
 
     def end_game(self):
+        """tell user game is over and set game over flag."""
         print("GAME_OVER")
         self.game_over = True
 
 
-#class App:
-
-
-
-
-
-
 if __name__ == "__main__":
-    playfield = Playfield()
-    playfield.sleep_ms = 1000
-
-    keyboard.add_hotkey("d", lambda: playfield.user_move_piece(0, 1))
-    keyboard.add_hotkey("a", lambda: playfield.user_move_piece(0, -1))
-    keyboard.add_hotkey("s", lambda: playfield.user_move_piece(1, 0))
-    keyboard.add_hotkey("space", playfield.user_hard_drop_piece)
-    keyboard.add_hotkey("q", lambda: playfield.user_rotate_piece("COUNTER_CLOCKWISE"))
-    keyboard.add_hotkey("e", lambda: playfield.user_rotate_piece("CLOCKWISE"))
-    keyboard.add_hotkey("x", playfield.end_game)
-    playfield.run()
+    app = App()
+    keyboard.add_hotkey("d", lambda: app.user_move_piece(0, 1))
+    keyboard.add_hotkey("a", lambda: app.user_move_piece(0, -1))
+    keyboard.add_hotkey("s", lambda: app.user_move_piece(1, 0))
+    keyboard.add_hotkey("space", app.user_hard_drop_piece)
+    keyboard.add_hotkey("q", lambda: app.user_rotate_piece("COUNTER_CLOCKWISE"))
+    keyboard.add_hotkey("e", lambda: app.user_rotate_piece("CLOCKWISE"))
+    keyboard.add_hotkey("x", app.end_game)
+    app.run()
     keyboard.unhook_all()
