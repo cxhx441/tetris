@@ -156,15 +156,7 @@ class Playfield:
         self.matrix = [
             [Playfield.EMPTY] * Playfield.WIDTH for _ in range(Playfield.HEIGHT)
         ]
-        self.stack = {
-            "I": [],
-            "J": [],
-            "L": [],
-            "O": [],
-            "S": [],
-            "T": [],
-            "Z": [],
-        }
+        self.stack = {}
 
     def __str__(self):
         mat_chrs = []
@@ -196,27 +188,35 @@ class Playfield:
         # remove rows from matrix and stack
         for r_idx in elim:
             for c_idx in range(Playfield.WIDTH):
-                shape = self.matrix[r_idx][c_idx]
-                self.stack[shape].remove([r_idx, c_idx])
+                del self.stack[(r_idx, c_idx)]
             del self.matrix[r_idx]
             self.matrix.insert(0, [Playfield.EMPTY] * Playfield.WIDTH)
 
-            for shape, coords in self.stack.items():
-                for coord in coords:
-                    if coord[0] < r_idx:
-                        coord[0] += 1
+            to_be_removed = []
+            to_be_added = []
+            for coord, shape in self.stack.items():
+                if coord[0] < r_idx:
+                    to_be_removed.append(coord)
+                    to_be_added.append(((coord[0] + 1, coord[1]), shape))
+
+            for coord in to_be_removed:
+                del self.stack[coord]
+            for el in to_be_added:
+                coord = el[0]
+                shape = el[1]
+                self.stack[coord] = shape
+
 
     def add_piece_to_stack(self, piece: Piece):
         """ add coords of piece to stack. """
         for coord in piece.get_coords():
-            self.stack[piece.shape].append(coord)
+            self.stack[tuple(coord)] = piece.shape
 
     def is_inside_stack(self, piece: Piece):
         """if intersection of coords and stack is not empty, True"""
         for coord in piece.get_coords():
-            for stack_coords in self.stack.values():
-                if coord in stack_coords:
-                    return True
+            if tuple(coord) in self.stack:
+                return True
         return False
 
     def remove_piece(self, piece: Piece):
